@@ -1,2 +1,5 @@
 /nbproject/private/
 /build/
+/db/
+derby.log
+*.lck
