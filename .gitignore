@@ -3,3 +3,4 @@
 /db/
 derby.log
 *.lck
+derby.log
