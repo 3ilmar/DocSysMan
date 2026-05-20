@@ -1,0 +1,168 @@
+package g10docmansys.db;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DocumentDAO {
+
+    public boolean addDocument(String title, String description, String filePath, String category) {
+        String sql = "INSERT INTO documents (title, description, file_path, category) "
+                + "VALUES (?, ?, ?, ?)";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+
+            statement.setString(1, title);
+            statement.setString(2, description);
+            statement.setString(3, filePath);
+            statement.setString(4, category);
+
+            int rowsInserted = statement.executeUpdate();
+
+            statement.close();
+            connection.close();
+
+            return rowsInserted > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Failed to add document.");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<String> getAllDocuments() {
+        List<String> documents = new ArrayList<String>();
+
+        String sql = "SELECT id, title, description, file_path, category "
+                + "FROM documents "
+                + "ORDER BY created_at DESC";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                String document = resultSet.getInt("id") + " | "
+                        + resultSet.getString("title") + " | "
+                        + resultSet.getString("description") + " | "
+                        + resultSet.getString("file_path") + " | "
+                        + resultSet.getString("category");
+
+                documents.add(document);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            System.out.println("Failed to get documents.");
+            e.printStackTrace();
+        }
+
+        return documents;
+    }
+
+    public List<String> searchDocuments(String keyword) {
+        List<String> results = new ArrayList<String>();
+
+        String sql = "SELECT id, title, description, file_path, category "
+                + "FROM documents "
+                + "WHERE LOWER(title) LIKE ? "
+                + "OR LOWER(description) LIKE ? "
+                + "OR LOWER(category) LIKE ? "
+                + "ORDER BY created_at DESC";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+
+            String searchPattern = "%" + keyword.toLowerCase() + "%";
+
+            statement.setString(1, searchPattern);
+            statement.setString(2, searchPattern);
+            statement.setString(3, searchPattern);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                String document = resultSet.getInt("id") + " | "
+                        + resultSet.getString("title") + " | "
+                        + resultSet.getString("description") + " | "
+                        + resultSet.getString("file_path") + " | "
+                        + resultSet.getString("category");
+
+                results.add(document);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            System.out.println("Failed to search documents.");
+            e.printStackTrace();
+        }
+
+        return results;
+    }
+
+    public boolean updateDocument(int id, String title, String description, String filePath, String category) {
+        String sql = "UPDATE documents "
+                + "SET title = ?, description = ?, file_path = ?, category = ? "
+                + "WHERE id = ?";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+
+            statement.setString(1, title);
+            statement.setString(2, description);
+            statement.setString(3, filePath);
+            statement.setString(4, category);
+            statement.setInt(5, id);
+
+            int rowsUpdated = statement.executeUpdate();
+
+            statement.close();
+            connection.close();
+
+            return rowsUpdated > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Failed to update document.");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteDocumentById(int id) {
+        String sql = "DELETE FROM documents WHERE id = ?";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+
+            statement.setInt(1, id);
+
+            int rowsDeleted = statement.executeUpdate();
+
+            statement.close();
+            connection.close();
+
+            return rowsDeleted > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Failed to delete document.");
+            e.printStackTrace();
+            return false;
+        }
+    }
+}
