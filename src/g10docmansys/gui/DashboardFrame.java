@@ -15,6 +15,10 @@ import java.util.List;
 public class DashboardFrame extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(DashboardFrame.class.getName());
+    private java.awt.CardLayout cardLayout;
+    private javax.swing.JPanel contentPanel;
+    private String currentUsername;
+    private String currentRole;
 
     /**
      * Creates new form DashboardFrame
@@ -34,6 +38,9 @@ public class DashboardFrame extends javax.swing.JFrame {
         setSize(1200, 750);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        this.currentUsername = username;
+        this.currentRole = role;
 
         java.awt.Color sidebarColor = new java.awt.Color(255, 204, 128);
         java.awt.Color backgroundColor = new java.awt.Color(245, 247, 250);
@@ -65,7 +72,6 @@ public class DashboardFrame extends javax.swing.JFrame {
         javax.swing.JButton btnUsers = createSidebarButton("Manage Users", sidebarFont);
         javax.swing.JButton btnSearch = createSidebarButton("Search", sidebarFont);
         javax.swing.JButton btnReports = createSidebarButton("Reports", sidebarFont);
-        javax.swing.JButton btnSettings = createSidebarButton("Settings", sidebarFont);
         javax.swing.JButton btnLogout = createSidebarButton("Logout", sidebarFont);
 
         sidebar.add(logo);
@@ -82,7 +88,6 @@ public class DashboardFrame extends javax.swing.JFrame {
         sidebar.add(javax.swing.Box.createVerticalStrut(12));
         sidebar.add(btnReports);
         sidebar.add(javax.swing.Box.createVerticalStrut(12));
-        sidebar.add(btnSettings);
         sidebar.add(javax.swing.Box.createVerticalGlue());
 
         javax.swing.JLabel version = new javax.swing.JLabel("<html>v1.0.0<br>© 2025 DocSysMan</html>");
@@ -94,16 +99,15 @@ public class DashboardFrame extends javax.swing.JFrame {
         sidebar.add(version);
 
         // CARD LAYOUT FOR MAIN PAGES
-        java.awt.CardLayout cardLayout = new java.awt.CardLayout();
-        javax.swing.JPanel contentPanel = new javax.swing.JPanel(cardLayout);
+        cardLayout = new java.awt.CardLayout();
+        contentPanel = new javax.swing.JPanel(cardLayout);
         contentPanel.setBackground(backgroundColor);
 
         javax.swing.JPanel dashboardPanel = createDashboardPage(username, role);
         DocumentTablePanel documentsPanel = new DocumentTablePanel();
 
         javax.swing.JPanel searchPanel = createPlaceholderPage("Search Documents", "Search functionality can be linked to the document table.");
-        javax.swing.JPanel reportsPanel = createPlaceholderPage("Reports", "Reports and document statistics can be shown here.");
-        javax.swing.JPanel settingsPanel = createPlaceholderPage("Settings", "Account and system settings can be shown here.");
+        javax.swing.JPanel reportsPanel = createReportsPage();
 
         contentPanel.add(dashboardPanel, "dashboard");
         contentPanel.add(documentsPanel, "documents");
@@ -115,21 +119,19 @@ public class DashboardFrame extends javax.swing.JFrame {
 
         contentPanel.add(searchPanel, "search");
         contentPanel.add(reportsPanel, "reports");
-        contentPanel.add(settingsPanel, "settings");
 
         root.add(sidebar, java.awt.BorderLayout.WEST);
         root.add(contentPanel, java.awt.BorderLayout.CENTER);
 
         setContentPane(root);
 
-        btnDashboard.addActionListener(e -> cardLayout.show(contentPanel, "dashboard"));
+        btnDashboard.addActionListener(e -> refreshDashboardPage());
         btnDocuments.addActionListener(e -> cardLayout.show(contentPanel, "documents"));
         if ("admin".equalsIgnoreCase(role)) {
             btnUsers.addActionListener(e -> cardLayout.show(contentPanel, "users"));
         }
-        btnSearch.addActionListener(e -> cardLayout.show(contentPanel, "search"));
+        btnSearch.addActionListener(e -> cardLayout.show(contentPanel, "documents"));
         btnReports.addActionListener(e -> cardLayout.show(contentPanel, "reports"));
-        btnSettings.addActionListener(e -> cardLayout.show(contentPanel, "settings"));
 
         btnLogout.addActionListener(e -> {
             LoginFrame login = new LoginFrame();
@@ -138,6 +140,68 @@ public class DashboardFrame extends javax.swing.JFrame {
         });
 
         cardLayout.show(contentPanel, "dashboard");
+    }
+
+    private void refreshDashboardPage() {
+        contentPanel.removeAll();
+
+        javax.swing.JPanel dashboardPanel = createDashboardPage(currentUsername, currentRole);
+        DocumentTablePanel documentsPanel = new DocumentTablePanel();
+
+        contentPanel.add(dashboardPanel, "dashboard");
+        contentPanel.add(documentsPanel, "documents");
+
+        if ("admin".equalsIgnoreCase(currentRole)) {
+            ManageUsersPanel usersPanel = new ManageUsersPanel();
+            contentPanel.add(usersPanel, "users");
+        }
+
+        javax.swing.JPanel reportsPanel = createReportsPage();
+        contentPanel.add(reportsPanel, "reports");
+
+        contentPanel.revalidate();
+        contentPanel.repaint();
+
+        cardLayout.show(contentPanel, "dashboard");
+    }
+
+    private javax.swing.JPanel createReportsPage() {
+        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panel.setBackground(new java.awt.Color(245, 247, 250));
+        panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(40, 40, 40, 40));
+
+        javax.swing.JLabel title = new javax.swing.JLabel("Reports");
+        title.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 28));
+
+        DocumentDAO documentDAO = new DocumentDAO();
+        UserDAO userDAO = new UserDAO();
+
+        int totalDocuments = documentDAO.getDocumentCount();
+        int totalUsers = userDAO.getUserCount();
+        int totalCategories = documentDAO.getCategoryCount();
+
+        javax.swing.JTextArea reportArea = new javax.swing.JTextArea();
+        reportArea.setEditable(false);
+        reportArea.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 16));
+
+        reportArea.setText(
+                "System Report\n\n"
+                + "Total Documents: " + totalDocuments + "\n"
+                + "Total Users: " + totalUsers + "\n"
+                + "Total Categories: " + totalCategories + "\n\n"
+                + "Category Breakdown:\n"
+        );
+
+        java.util.List<String> categoryReport = documentDAO.getCategoryReport();
+
+        for (String row : categoryReport) {
+            reportArea.append(row + "\n");
+        }
+
+        panel.add(title, java.awt.BorderLayout.NORTH);
+        panel.add(new javax.swing.JScrollPane(reportArea), java.awt.BorderLayout.CENTER);
+
+        return panel;
     }
 
     private javax.swing.JButton createSidebarButton(String text, java.awt.Font font) {
@@ -294,18 +358,6 @@ public class DashboardFrame extends javax.swing.JFrame {
 
         javax.swing.JPanel actions = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
         actions.setOpaque(false);
-
-        javax.swing.JButton btnAdd = new javax.swing.JButton("+ Add Document");
-        javax.swing.JButton btnEdit = new javax.swing.JButton("Edit");
-        javax.swing.JButton btnDelete = new javax.swing.JButton("Delete");
-        javax.swing.JButton btnSearch = new javax.swing.JButton("Search");
-
-        btnAdd.setBackground(new java.awt.Color(255, 204, 128));
-
-        actions.add(btnAdd);
-        actions.add(btnEdit);
-        actions.add(btnDelete);
-        actions.add(btnSearch);
 
         top.add(title, java.awt.BorderLayout.WEST);
         top.add(actions, java.awt.BorderLayout.EAST);
