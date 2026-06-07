@@ -119,7 +119,9 @@ public class LoginFrame extends javax.swing.JFrame {
             if (userDAO.login(username, password)) {
                 javax.swing.JOptionPane.showMessageDialog(this, "Login successful.");
 
-                DashboardFrame dashboard = new DashboardFrame(username);
+                String role = userDAO.getUserRole(username);
+
+                DashboardFrame dashboard = new DashboardFrame(username, role);
                 dashboard.setVisible(true);
                 this.dispose();
             } else {
