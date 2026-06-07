@@ -104,7 +104,7 @@ public class DashboardFrame extends javax.swing.JFrame {
         contentPanel.setBackground(backgroundColor);
 
         javax.swing.JPanel dashboardPanel = createDashboardPage(username, role);
-        DocumentTablePanel documentsPanel = new DocumentTablePanel();
+        DocumentTablePanel documentsPanel = new DocumentTablePanel(username, role);
 
         contentPanel.add(dashboardPanel, "dashboard");
         contentPanel.add(documentsPanel, "documents");
@@ -143,7 +143,7 @@ public class DashboardFrame extends javax.swing.JFrame {
         contentPanel.removeAll();
 
         javax.swing.JPanel dashboardPanel = createDashboardPage(currentUsername, currentRole);
-        DocumentTablePanel documentsPanel = new DocumentTablePanel();
+        DocumentTablePanel documentsPanel = new DocumentTablePanel(currentUsername, currentRole);
 
         contentPanel.add(dashboardPanel, "dashboard");
         contentPanel.add(documentsPanel, "documents");
@@ -456,7 +456,7 @@ public class DashboardFrame extends javax.swing.JFrame {
         top.add(title, java.awt.BorderLayout.WEST);
         top.add(actions, java.awt.BorderLayout.EAST);
 
-        String[] columns = {"ID", "Title", "Description", "File Path", "Category"};
+        String[] columns = {"ID", "Title", "Description", "File Path", "Category", "Owner"};
 
         javax.swing.table.DefaultTableModel model = new javax.swing.table.DefaultTableModel(columns, 0) {
             @Override
@@ -471,13 +471,14 @@ public class DashboardFrame extends javax.swing.JFrame {
         for (String document : recentDocuments) {
             String[] parts = document.split("\\|");
 
-            if (parts.length >= 5) {
+            if (parts.length >= 6) {
                 model.addRow(new Object[]{
                     parts[0].trim(),
                     parts[1].trim(),
                     parts[2].trim(),
                     parts[3].trim(),
-                    parts[4].trim()
+                    parts[4].trim(),
+                    parts[5].trim()
                 });
             }
         }
@@ -494,6 +495,7 @@ public class DashboardFrame extends javax.swing.JFrame {
         table.getColumnModel().getColumn(2).setPreferredWidth(260);   // Description
         table.getColumnModel().getColumn(3).setPreferredWidth(260);   // File Path
         table.getColumnModel().getColumn(4).setPreferredWidth(180);   // Category
+        table.getColumnModel().getColumn(5).setPreferredWidth(140);   // owner
 
         table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             @Override

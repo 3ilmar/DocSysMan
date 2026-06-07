@@ -20,6 +20,7 @@ public class DatabaseManager {
             Statement statement = connection.createStatement();
 
             createDocumentsTable(statement);
+            addOwnerColumnIfMissing(statement);
             createUsersTable(statement);
             createActivityLogTable(statement);
             insertDefaultUsers(connection);
@@ -44,12 +45,23 @@ public class DatabaseManager {
                     + "description VARCHAR(1000), "
                     + "file_path VARCHAR(500), "
                     + "category VARCHAR(100), "
+                    + "owner VARCHAR(100), "
                     + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
                     + ")"
             );
         } catch (SQLException e) {
 
             if (!"X0Y32".equals(e.getSQLState())) {
+                throw e;
+            }
+        }
+    }
+
+    private static void addOwnerColumnIfMissing(Statement statement) throws SQLException {
+        try {
+            statement.executeUpdate("ALTER TABLE documents ADD COLUMN owner VARCHAR(100)");
+        } catch (SQLException e) {
+            if (!"X0Y32".equals(e.getSQLState()) && !"X0Y44".equals(e.getSQLState())) {
                 throw e;
             }
         }

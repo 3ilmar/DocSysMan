@@ -9,9 +9,9 @@ import java.util.List;
 
 public class DocumentDAO {
 
-    public boolean addDocument(String title, String description, String filePath, String category) {
-        String sql = "INSERT INTO documents (title, description, file_path, category) "
-                + "VALUES (?, ?, ?, ?)";
+    public boolean addDocument(String title, String description, String filePath, String category, String owner) {
+        String sql = "INSERT INTO documents (title, description, file_path, category, owner) "
+                + "VALUES (?, ?, ?, ?, ?)";
 
         try {
             Connection connection = DatabaseManager.getConnection();
@@ -21,6 +21,7 @@ public class DocumentDAO {
             statement.setString(2, description);
             statement.setString(3, filePath);
             statement.setString(4, category);
+            statement.setString(5, owner);
 
             int rowsInserted = statement.executeUpdate();
 
@@ -39,7 +40,7 @@ public class DocumentDAO {
     public List<String> getAllDocuments() {
         List<String> documents = new ArrayList<String>();
 
-        String sql = "SELECT id, title, description, file_path, category "
+        String sql = "SELECT id, title, description, file_path, category, owner "
                 + "FROM documents "
                 + "ORDER BY created_at DESC";
 
@@ -53,7 +54,8 @@ public class DocumentDAO {
                         + resultSet.getString("title") + " | "
                         + resultSet.getString("description") + " | "
                         + resultSet.getString("file_path") + " | "
-                        + resultSet.getString("category");
+                        + resultSet.getString("category") + " | "
+                        + resultSet.getString("owner");
 
                 documents.add(document);
             }
@@ -73,11 +75,12 @@ public class DocumentDAO {
     public List<String> searchDocuments(String keyword) {
         List<String> results = new ArrayList<String>();
 
-        String sql = "SELECT id, title, description, file_path, category "
+        String sql = "SELECT id, title, description, file_path, category, owner "
                 + "FROM documents "
                 + "WHERE LOWER(title) LIKE ? "
                 + "OR LOWER(description) LIKE ? "
                 + "OR LOWER(category) LIKE ? "
+                + "OR LOWER(owner) LIKE ? "
                 + "ORDER BY created_at DESC";
 
         try {
@@ -89,6 +92,7 @@ public class DocumentDAO {
             statement.setString(1, searchPattern);
             statement.setString(2, searchPattern);
             statement.setString(3, searchPattern);
+            statement.setString(4, searchPattern);
 
             ResultSet resultSet = statement.executeQuery();
 
@@ -97,7 +101,8 @@ public class DocumentDAO {
                         + resultSet.getString("title") + " | "
                         + resultSet.getString("description") + " | "
                         + resultSet.getString("file_path") + " | "
-                        + resultSet.getString("category");
+                        + resultSet.getString("category") + " | "
+                        + resultSet.getString("owner");
 
                 results.add(document);
             }
@@ -223,7 +228,7 @@ public class DocumentDAO {
     public List<String> getRecentDocuments() {
         List<String> documents = new ArrayList<String>();
 
-        String sql = "SELECT id, title, description, file_path, category "
+        String sql = "SELECT id, title, description, file_path, category, owner "
                 + "FROM documents "
                 + "ORDER BY created_at DESC "
                 + "FETCH FIRST 5 ROWS ONLY";
@@ -238,7 +243,8 @@ public class DocumentDAO {
                         + resultSet.getString("title") + " | "
                         + resultSet.getString("description") + " | "
                         + resultSet.getString("file_path") + " | "
-                        + resultSet.getString("category");
+                        + resultSet.getString("category") + " | "
+                        + resultSet.getString("owner");
 
                 documents.add(document);
             }

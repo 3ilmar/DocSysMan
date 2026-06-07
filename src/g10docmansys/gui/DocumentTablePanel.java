@@ -30,11 +30,23 @@ public class DocumentTablePanel extends javax.swing.JPanel {
     private DocumentDAO documentDAO;
     private ActivityLogDAO activityLogDAO;
 
+    private String currentUsername;
+    private String currentRole;
+    private JButton btnAdd;
+    private JButton btnEdit;
+    private JButton btnDelete;
+
     /**
      * Creates new form DocumentTablePanel
      */
     public DocumentTablePanel() {
+        this("system", "user");
+    }
+
+    public DocumentTablePanel(String username, String role) {
         initComponents();
+        this.currentUsername = username;
+        this.currentRole = role;
         documentDAO = new DocumentDAO();
         activityLogDAO = new ActivityLogDAO();
         setupPanel();
@@ -71,18 +83,24 @@ public class DocumentTablePanel extends javax.swing.JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonPanel.setOpaque(false);
 
-        JButton btnAdd = new JButton("+ Add Document");
-        JButton btnEdit = new JButton("Edit Selected");
-        JButton btnDelete = new JButton("Delete Selected");
+        btnAdd = new JButton("+ Add Document");
+        btnEdit = new JButton("Edit Selected");
+        btnDelete = new JButton("Delete Selected");
 
         btnAdd.setBackground(new java.awt.Color(255, 204, 128));
+
+        boolean isAdmin = "admin".equalsIgnoreCase(currentRole);
+
+        btnAdd.setVisible(true);
+        btnEdit.setVisible(true);
+        btnDelete.setVisible(isAdmin);
 
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnEdit);
         buttonPanel.add(btnDelete);
 
         tableModel = new DefaultTableModel(
-                new Object[]{"ID", "Title", "Description", "File Path", "Category"}, 0
+                new Object[]{"ID", "Title", "Description", "File Path", "Category", "Owner"}, 0
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -97,11 +115,12 @@ public class DocumentTablePanel extends javax.swing.JPanel {
 
         documentTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        documentTable.getColumnModel().getColumn(0).setPreferredWidth(70);    // ID
-        documentTable.getColumnModel().getColumn(1).setPreferredWidth(260);   // Title
-        documentTable.getColumnModel().getColumn(2).setPreferredWidth(360);   // Description
-        documentTable.getColumnModel().getColumn(3).setPreferredWidth(360);   // File Path
-        documentTable.getColumnModel().getColumn(4).setPreferredWidth(260);   // Category
+        documentTable.getColumnModel().getColumn(0).setPreferredWidth(70);
+        documentTable.getColumnModel().getColumn(1).setPreferredWidth(240);
+        documentTable.getColumnModel().getColumn(2).setPreferredWidth(320);
+        documentTable.getColumnModel().getColumn(3).setPreferredWidth(320);
+        documentTable.getColumnModel().getColumn(4).setPreferredWidth(200);
+        documentTable.getColumnModel().getColumn(5).setPreferredWidth(160);
 
         documentTable.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             @Override
@@ -180,13 +199,14 @@ public class DocumentTablePanel extends javax.swing.JPanel {
     private void addDocumentStringToTable(String document) {
         String[] parts = document.split("\\|");
 
-        if (parts.length >= 5) {
+        if (parts.length >= 6) {
             tableModel.addRow(new Object[]{
                 parts[0].trim(),
                 parts[1].trim(),
                 parts[2].trim(),
                 parts[3].trim(),
-                parts[4].trim()
+                parts[4].trim(),
+                parts[5].trim()
             });
         }
     }
@@ -200,12 +220,13 @@ public class DocumentTablePanel extends javax.swing.JPanel {
                     dialog.getDocumentTitle(),
                     dialog.getDocumentDescription(),
                     dialog.getDocumentFilePath(),
-                    dialog.getDocumentCategory()
+                    dialog.getDocumentCategory(),
+                    currentUsername
             );
 
             if (success) {
                 activityLogDAO.logActivity(
-                        "system",
+                        currentUsername,
                         "Added document",
                         "Title: " + dialog.getDocumentTitle()
                 );
@@ -223,6 +244,17 @@ public class DocumentTablePanel extends javax.swing.JPanel {
 
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "Please select a document to edit.");
+            return;
+        }
+
+        Object ownerValue = tableModel.getValueAt(selectedRow, 5);
+        String owner = ownerValue == null ? "" : ownerValue.toString();
+
+        boolean isAdmin = "admin".equalsIgnoreCase(currentRole);
+        boolean isOwner = owner.equalsIgnoreCase(currentUsername);
+
+        if (!isAdmin && !isOwner) {
+            JOptionPane.showMessageDialog(this, "You can only edit documents that you created.");
             return;
         }
 
@@ -246,7 +278,7 @@ public class DocumentTablePanel extends javax.swing.JPanel {
 
             if (success) {
                 activityLogDAO.logActivity(
-                        "system",
+                        currentUsername,
                         "Updated document",
                         "ID: " + id + ", Title: " + dialog.getDocumentTitle()
                 );
@@ -260,6 +292,10 @@ public class DocumentTablePanel extends javax.swing.JPanel {
     }
 
     private void deleteSelectedDocument() {
+        if (!"admin".equalsIgnoreCase(currentRole)) {
+            JOptionPane.showMessageDialog(this, "Only administrators can delete documents.");
+            return;
+        }
         int selectedRow = documentTable.getSelectedRow();
 
         if (selectedRow == -1) {
@@ -281,7 +317,7 @@ public class DocumentTablePanel extends javax.swing.JPanel {
 
             if (success) {
                 activityLogDAO.logActivity(
-                        "system",
+                        currentUsername,
                         "Deleted document",
                         "ID: " + id
                 );
