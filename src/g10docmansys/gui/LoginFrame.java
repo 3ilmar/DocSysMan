@@ -19,6 +19,27 @@ public class LoginFrame extends javax.swing.JFrame {
         initComponents();
         setLocationRelativeTo(null);
         setTitle("Document Management System - Login");
+        styleLogin();
+    }
+
+    private void styleLogin() {
+        getContentPane().setBackground(new java.awt.Color(245, 247, 250));
+
+        jLabel2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+        jLabel3.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+
+        txtUsername.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
+        txtPassword.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
+
+        btnLogin.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+        btnExit.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+
+        btnLogin.setBackground(new java.awt.Color(255, 204, 128));
+        btnLogin.setFocusPainted(false);
+
+        btnExit.setFocusPainted(false);
+
+        setResizable(false);
     }
 
     /**
