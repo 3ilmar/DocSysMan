@@ -18,6 +18,14 @@ public class DashboardFrame extends javax.swing.JFrame {
      */
     public DashboardFrame() {
         initComponents();
+        setLocationRelativeTo(null);
+        setTitle("Document Management System - Dashboard");
+    }
+    
+    public DashboardFrame(String username) {
+        initComponents();
+        setLocationRelativeTo(null);
+        setTitle("Dashboard - Logged in as " + username);
     }
 
     /**

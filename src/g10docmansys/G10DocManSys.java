@@ -1,17 +1,19 @@
 package g10docmansys;
 
 import g10docmansys.db.DatabaseManager;
+import g10docmansys.gui.LoginFrame;
+import javax.swing.SwingUtilities;
 
 public class G10DocManSys {
 
     public static void main(String[] args) {
-        
         DatabaseManager.initializeDatabase();
-        
-        // Create MenuController object
-        MenuController menu = new MenuController();
-        
-        // Start the system
-        menu.start();
+
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new LoginFrame().setVisible(true);
+            }
+        });
     }
 }
