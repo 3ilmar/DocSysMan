@@ -1,5 +1,9 @@
 package g10docmansys.gui;
 
+import g10docmansys.db.DocumentDAO;
+import g10docmansys.db.UserDAO;
+import java.util.List;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -17,12 +21,12 @@ public class DashboardFrame extends javax.swing.JFrame {
      */
     public DashboardFrame() {
         initComponents();
-        setupDashboard("User", "User");
+        setupDashboard("Test User", "user");
     }
 
-    public DashboardFrame(String username) {
+    public DashboardFrame(String username, String role) {
         initComponents();
-        setupDashboard(username, "Administrator");
+        setupDashboard(username, role);
     }
 
     private void setupDashboard(String username, String role) {
@@ -70,8 +74,10 @@ public class DashboardFrame extends javax.swing.JFrame {
         sidebar.add(javax.swing.Box.createVerticalStrut(12));
         sidebar.add(btnDocuments);
         sidebar.add(javax.swing.Box.createVerticalStrut(12));
-        sidebar.add(btnUsers);
-        sidebar.add(javax.swing.Box.createVerticalStrut(12));
+        if ("admin".equalsIgnoreCase(role)) {
+            sidebar.add(btnUsers);
+            sidebar.add(javax.swing.Box.createVerticalStrut(12));
+        }
         sidebar.add(btnSearch);
         sidebar.add(javax.swing.Box.createVerticalStrut(12));
         sidebar.add(btnReports);
@@ -94,7 +100,6 @@ public class DashboardFrame extends javax.swing.JFrame {
 
         javax.swing.JPanel dashboardPanel = createDashboardPage(username, role);
         DocumentTablePanel documentsPanel = new DocumentTablePanel();
-        ManageUsersPanel usersPanel = new ManageUsersPanel();
 
         javax.swing.JPanel searchPanel = createPlaceholderPage("Search Documents", "Search functionality can be linked to the document table.");
         javax.swing.JPanel reportsPanel = createPlaceholderPage("Reports", "Reports and document statistics can be shown here.");
@@ -102,7 +107,12 @@ public class DashboardFrame extends javax.swing.JFrame {
 
         contentPanel.add(dashboardPanel, "dashboard");
         contentPanel.add(documentsPanel, "documents");
-        contentPanel.add(usersPanel, "users");
+
+        if ("admin".equalsIgnoreCase(role)) {
+            ManageUsersPanel usersPanel = new ManageUsersPanel();
+            contentPanel.add(usersPanel, "users");
+        }
+
         contentPanel.add(searchPanel, "search");
         contentPanel.add(reportsPanel, "reports");
         contentPanel.add(settingsPanel, "settings");
@@ -114,7 +124,9 @@ public class DashboardFrame extends javax.swing.JFrame {
 
         btnDashboard.addActionListener(e -> cardLayout.show(contentPanel, "dashboard"));
         btnDocuments.addActionListener(e -> cardLayout.show(contentPanel, "documents"));
-        btnUsers.addActionListener(e -> cardLayout.show(contentPanel, "users"));
+        if ("admin".equalsIgnoreCase(role)) {
+            btnUsers.addActionListener(e -> cardLayout.show(contentPanel, "users"));
+        }
         btnSearch.addActionListener(e -> cardLayout.show(contentPanel, "search"));
         btnReports.addActionListener(e -> cardLayout.show(contentPanel, "reports"));
         btnSettings.addActionListener(e -> cardLayout.show(contentPanel, "settings"));
@@ -207,10 +219,17 @@ public class DashboardFrame extends javax.swing.JFrame {
         cardsPanel.setOpaque(false);
         cardsPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(30, 0, 25, 0));
 
-        cardsPanel.add(createStatCard("Total Documents", "0", "All time"));
-        cardsPanel.add(createStatCard("Active Users", "0", "System users"));
-        cardsPanel.add(createStatCard("Categories", "0", "Document groups"));
-        cardsPanel.add(createStatCard("Pending Reviews", "0", "Require attention"));
+        DocumentDAO documentDAO = new DocumentDAO();
+        UserDAO userDAO = new UserDAO();
+
+        int totalDocuments = documentDAO.getDocumentCount();
+        int totalUsers = userDAO.getUserCount();
+        int totalCategories = documentDAO.getCategoryCount();
+
+        cardsPanel.add(createStatCard("Total Documents", String.valueOf(totalDocuments), "All time"));
+        cardsPanel.add(createStatCard("Users", String.valueOf(totalUsers), "System users"));
+        cardsPanel.add(createStatCard("Categories", String.valueOf(totalCategories), "Document groups"));
+        cardsPanel.add(createStatCard("Status", "Active", "System running"));
 
         // MAIN CONTENT AREA
         javax.swing.JPanel mainContent = new javax.swing.JPanel(new java.awt.BorderLayout(20, 0));
@@ -291,15 +310,33 @@ public class DashboardFrame extends javax.swing.JFrame {
         top.add(title, java.awt.BorderLayout.WEST);
         top.add(actions, java.awt.BorderLayout.EAST);
 
-        String[] columns = {"ID", "Title", "Category", "Owner", "Status", "Last Updated"};
-        Object[][] rows = {
-            {"DOC-001", "Project Proposal.docx", "Proposals", "Admin", "Approved", "Today"},
-            {"DOC-002", "Budget Report.xlsx", "Finance", "User", "Draft", "Today"},
-            {"DOC-003", "Employee Handbook.pdf", "HR", "Admin", "Under Review", "Yesterday"},
-            {"DOC-004", "System Requirements.docx", "IT", "User", "Approved", "Yesterday"}
+        String[] columns = {"ID", "Title", "Description", "File Path", "Category"};
+
+        javax.swing.table.DefaultTableModel model = new javax.swing.table.DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
         };
 
-        javax.swing.JTable table = new javax.swing.JTable(rows, columns);
+        DocumentDAO documentDAO = new DocumentDAO();
+        List<String> recentDocuments = documentDAO.getRecentDocuments();
+
+        for (String document : recentDocuments) {
+            String[] parts = document.split("\\|");
+
+            if (parts.length >= 5) {
+                model.addRow(new Object[]{
+                    parts[0].trim(),
+                    parts[1].trim(),
+                    parts[2].trim(),
+                    parts[3].trim(),
+                    parts[4].trim()
+                });
+            }
+        }
+
+        javax.swing.JTable table = new javax.swing.JTable(model);
         table.setRowHeight(32);
         table.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
         table.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));

@@ -112,4 +112,61 @@ public class UserDAO {
             return false;
         }
     }
+
+    public int getUserCount() {
+        String sql = "SELECT COUNT(*) FROM users";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+
+            int count = 0;
+
+            if (resultSet.next()) {
+                count = resultSet.getInt(1);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+            return count;
+
+        } catch (SQLException e) {
+            System.out.println("Failed to count users.");
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public java.util.List<String> getAllUsers() {
+        java.util.List<String> users = new java.util.ArrayList<String>();
+
+        String sql = "SELECT id, username, role FROM users ORDER BY id";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                String user = resultSet.getInt("id") + " | "
+                        + resultSet.getString("username") + " | "
+                        + resultSet.getString("role");
+
+                users.add(user);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            System.out.println("Failed to get users.");
+            e.printStackTrace();
+        }
+
+        return users;
+    }
 }

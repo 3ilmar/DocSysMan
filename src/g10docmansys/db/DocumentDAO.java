@@ -165,4 +165,125 @@ public class DocumentDAO {
             return false;
         }
     }
+
+    public int getDocumentCount() {
+        String sql = "SELECT COUNT(*) FROM documents";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+
+            int count = 0;
+
+            if (resultSet.next()) {
+                count = resultSet.getInt(1);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+            return count;
+
+        } catch (SQLException e) {
+            System.out.println("Failed to count documents.");
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public int getCategoryCount() {
+        String sql = "SELECT COUNT(DISTINCT category) FROM documents";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+
+            int count = 0;
+
+            if (resultSet.next()) {
+                count = resultSet.getInt(1);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+            return count;
+
+        } catch (SQLException e) {
+            System.out.println("Failed to count categories.");
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public List<String> getRecentDocuments() {
+        List<String> documents = new ArrayList<String>();
+
+        String sql = "SELECT id, title, description, file_path, category "
+                + "FROM documents "
+                + "ORDER BY created_at DESC "
+                + "FETCH FIRST 5 ROWS ONLY";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                String document = resultSet.getInt("id") + " | "
+                        + resultSet.getString("title") + " | "
+                        + resultSet.getString("description") + " | "
+                        + resultSet.getString("file_path") + " | "
+                        + resultSet.getString("category");
+
+                documents.add(document);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            System.out.println("Failed to get recent documents.");
+            e.printStackTrace();
+        }
+
+        return documents;
+    }
+
+    public List<String> getCategoryReport() {
+        List<String> report = new ArrayList<String>();
+
+        String sql = "SELECT category, COUNT(*) AS total "
+                + "FROM documents "
+                + "GROUP BY category "
+                + "ORDER BY total DESC";
+
+        try {
+            Connection connection = DatabaseManager.getConnection();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                String category = resultSet.getString("category");
+                int total = resultSet.getInt("total");
+
+                report.add(category + " | " + total);
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+        } catch (SQLException e) {
+            System.out.println("Failed to get category report.");
+            e.printStackTrace();
+        }
+
+        return report;
+    }
 }
