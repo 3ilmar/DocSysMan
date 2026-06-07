@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
+import g10docmansys.db.ActivityLogDAO;
 
 /**
  *
@@ -27,6 +28,7 @@ public class DocumentTablePanel extends javax.swing.JPanel {
     private DefaultTableModel tableModel;
     private JTextField txtSearch;
     private DocumentDAO documentDAO;
+    private ActivityLogDAO activityLogDAO;
 
     /**
      * Creates new form DocumentTablePanel
@@ -34,6 +36,7 @@ public class DocumentTablePanel extends javax.swing.JPanel {
     public DocumentTablePanel() {
         initComponents();
         documentDAO = new DocumentDAO();
+        activityLogDAO = new ActivityLogDAO();
         setupPanel();
         loadDocuments();
     }
@@ -91,6 +94,27 @@ public class DocumentTablePanel extends javax.swing.JPanel {
         documentTable.setRowHeight(30);
         documentTable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
         documentTable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+
+        documentTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        documentTable.getColumnModel().getColumn(0).setPreferredWidth(70);    // ID
+        documentTable.getColumnModel().getColumn(1).setPreferredWidth(260);   // Title
+        documentTable.getColumnModel().getColumn(2).setPreferredWidth(360);   // Description
+        documentTable.getColumnModel().getColumn(3).setPreferredWidth(360);   // File Path
+        documentTable.getColumnModel().getColumn(4).setPreferredWidth(260);   // Category
+
+        documentTable.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                int row = documentTable.rowAtPoint(e.getPoint());
+                int column = documentTable.columnAtPoint(e.getPoint());
+
+                if (row > -1 && column > -1) {
+                    Object value = documentTable.getValueAt(row, column);
+                    documentTable.setToolTipText(value == null ? "" : value.toString());
+                }
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(documentTable);
 
@@ -180,6 +204,12 @@ public class DocumentTablePanel extends javax.swing.JPanel {
             );
 
             if (success) {
+                activityLogDAO.logActivity(
+                        "system",
+                        "Added document",
+                        "Title: " + dialog.getDocumentTitle()
+                );
+
                 JOptionPane.showMessageDialog(this, "Document added successfully.");
                 loadDocuments();
             } else {
@@ -215,6 +245,12 @@ public class DocumentTablePanel extends javax.swing.JPanel {
             );
 
             if (success) {
+                activityLogDAO.logActivity(
+                        "system",
+                        "Updated document",
+                        "ID: " + id + ", Title: " + dialog.getDocumentTitle()
+                );
+
                 JOptionPane.showMessageDialog(this, "Document updated successfully.");
                 loadDocuments();
             } else {
@@ -244,6 +280,12 @@ public class DocumentTablePanel extends javax.swing.JPanel {
             boolean success = documentDAO.deleteDocumentById(id);
 
             if (success) {
+                activityLogDAO.logActivity(
+                        "system",
+                        "Deleted document",
+                        "ID: " + id
+                );
+
                 JOptionPane.showMessageDialog(this, "Document deleted successfully.");
                 loadDocuments();
             } else {

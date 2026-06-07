@@ -3,6 +3,7 @@ package g10docmansys.gui;
 import g10docmansys.db.DocumentDAO;
 import g10docmansys.db.UserDAO;
 import java.util.List;
+import g10docmansys.db.ActivityLogDAO;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -70,7 +71,6 @@ public class DashboardFrame extends javax.swing.JFrame {
         javax.swing.JButton btnDashboard = createSidebarButton("Dashboard", sidebarFont);
         javax.swing.JButton btnDocuments = createSidebarButton("Documents", sidebarFont);
         javax.swing.JButton btnUsers = createSidebarButton("Manage Users", sidebarFont);
-        javax.swing.JButton btnSearch = createSidebarButton("Search", sidebarFont);
         javax.swing.JButton btnReports = createSidebarButton("Reports", sidebarFont);
         javax.swing.JButton btnLogout = createSidebarButton("Logout", sidebarFont);
 
@@ -83,11 +83,11 @@ public class DashboardFrame extends javax.swing.JFrame {
         if ("admin".equalsIgnoreCase(role)) {
             sidebar.add(btnUsers);
             sidebar.add(javax.swing.Box.createVerticalStrut(12));
+
+            sidebar.add(btnReports);
+            sidebar.add(javax.swing.Box.createVerticalStrut(12));
         }
-        sidebar.add(btnSearch);
-        sidebar.add(javax.swing.Box.createVerticalStrut(12));
-        sidebar.add(btnReports);
-        sidebar.add(javax.swing.Box.createVerticalStrut(12));
+
         sidebar.add(javax.swing.Box.createVerticalGlue());
 
         javax.swing.JLabel version = new javax.swing.JLabel("<html>v1.0.0<br>© 2025 DocSysMan</html>");
@@ -106,19 +106,16 @@ public class DashboardFrame extends javax.swing.JFrame {
         javax.swing.JPanel dashboardPanel = createDashboardPage(username, role);
         DocumentTablePanel documentsPanel = new DocumentTablePanel();
 
-        javax.swing.JPanel searchPanel = createPlaceholderPage("Search Documents", "Search functionality can be linked to the document table.");
-        javax.swing.JPanel reportsPanel = createReportsPage();
-
         contentPanel.add(dashboardPanel, "dashboard");
         contentPanel.add(documentsPanel, "documents");
 
         if ("admin".equalsIgnoreCase(role)) {
             ManageUsersPanel usersPanel = new ManageUsersPanel();
             contentPanel.add(usersPanel, "users");
-        }
 
-        contentPanel.add(searchPanel, "search");
-        contentPanel.add(reportsPanel, "reports");
+            javax.swing.JPanel reportsPanel = createReportsPage();
+            contentPanel.add(reportsPanel, "reports");
+        }
 
         root.add(sidebar, java.awt.BorderLayout.WEST);
         root.add(contentPanel, java.awt.BorderLayout.CENTER);
@@ -127,11 +124,11 @@ public class DashboardFrame extends javax.swing.JFrame {
 
         btnDashboard.addActionListener(e -> refreshDashboardPage());
         btnDocuments.addActionListener(e -> cardLayout.show(contentPanel, "documents"));
+
         if ("admin".equalsIgnoreCase(role)) {
             btnUsers.addActionListener(e -> cardLayout.show(contentPanel, "users"));
+            btnReports.addActionListener(e -> cardLayout.show(contentPanel, "reports"));
         }
-        btnSearch.addActionListener(e -> cardLayout.show(contentPanel, "documents"));
-        btnReports.addActionListener(e -> cardLayout.show(contentPanel, "reports"));
 
         btnLogout.addActionListener(e -> {
             LoginFrame login = new LoginFrame();
@@ -154,10 +151,10 @@ public class DashboardFrame extends javax.swing.JFrame {
         if ("admin".equalsIgnoreCase(currentRole)) {
             ManageUsersPanel usersPanel = new ManageUsersPanel();
             contentPanel.add(usersPanel, "users");
-        }
 
-        javax.swing.JPanel reportsPanel = createReportsPage();
-        contentPanel.add(reportsPanel, "reports");
+            javax.swing.JPanel reportsPanel = createReportsPage();
+            contentPanel.add(reportsPanel, "reports");
+        }
 
         contentPanel.revalidate();
         contentPanel.repaint();
@@ -166,42 +163,142 @@ public class DashboardFrame extends javax.swing.JFrame {
     }
 
     private javax.swing.JPanel createReportsPage() {
-        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout());
-        panel.setBackground(new java.awt.Color(245, 247, 250));
-        panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(40, 40, 40, 40));
+        javax.swing.JPanel page = new javax.swing.JPanel(new java.awt.BorderLayout());
+        page.setBackground(new java.awt.Color(245, 247, 250));
+        page.setBorder(javax.swing.BorderFactory.createEmptyBorder(30, 35, 30, 35));
 
         javax.swing.JLabel title = new javax.swing.JLabel("Reports");
         title.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 28));
 
+        javax.swing.JLabel subtitle = new javax.swing.JLabel("System summary and detailed activity log.");
+        subtitle.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        subtitle.setForeground(new java.awt.Color(120, 120, 120));
+
+        javax.swing.JPanel headerPanel = new javax.swing.JPanel(new java.awt.GridLayout(2, 1));
+        headerPanel.setOpaque(false);
+        headerPanel.add(title);
+        headerPanel.add(subtitle);
+
         DocumentDAO documentDAO = new DocumentDAO();
         UserDAO userDAO = new UserDAO();
+        ActivityLogDAO activityLogDAO = new ActivityLogDAO();
 
         int totalDocuments = documentDAO.getDocumentCount();
         int totalUsers = userDAO.getUserCount();
         int totalCategories = documentDAO.getCategoryCount();
+        int totalActivities = activityLogDAO.getActivityCount();
 
         javax.swing.JTextArea reportArea = new javax.swing.JTextArea();
         reportArea.setEditable(false);
-        reportArea.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 16));
+        reportArea.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 15));
 
         reportArea.setText(
                 "System Report\n\n"
                 + "Total Documents: " + totalDocuments + "\n"
                 + "Total Users: " + totalUsers + "\n"
-                + "Total Categories: " + totalCategories + "\n\n"
+                + "Total Categories: " + totalCategories + "\n"
+                + "Logged Activities: " + totalActivities + "\n\n"
                 + "Category Breakdown:\n"
         );
 
         java.util.List<String> categoryReport = documentDAO.getCategoryReport();
 
-        for (String row : categoryReport) {
-            reportArea.append(row + "\n");
+        if (categoryReport.isEmpty()) {
+            reportArea.append("No categories found.\n");
+        } else {
+            for (String row : categoryReport) {
+                reportArea.append(row + "\n");
+            }
         }
 
-        panel.add(title, java.awt.BorderLayout.NORTH);
-        panel.add(new javax.swing.JScrollPane(reportArea), java.awt.BorderLayout.CENTER);
+        javax.swing.JPanel reportCard = new javax.swing.JPanel(new java.awt.BorderLayout());
+        reportCard.setBackground(java.awt.Color.WHITE);
+        reportCard.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(225, 225, 225)),
+                javax.swing.BorderFactory.createEmptyBorder(18, 18, 18, 18)
+        ));
 
-        return panel;
+        javax.swing.JLabel reportTitle = new javax.swing.JLabel("Summary");
+        reportTitle.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 17));
+
+        reportCard.add(reportTitle, java.awt.BorderLayout.NORTH);
+        reportCard.add(new javax.swing.JScrollPane(reportArea), java.awt.BorderLayout.CENTER);
+
+        String[] columns = {"ID", "Username", "Action", "Details", "Date/Time"};
+
+        javax.swing.table.DefaultTableModel activityModel = new javax.swing.table.DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        java.util.List<String> activities = activityLogDAO.getAllActivities();
+
+        for (String activity : activities) {
+            String[] parts = activity.split("\\|");
+
+            if (parts.length >= 5) {
+                activityModel.addRow(new Object[]{
+                    parts[0].trim(),
+                    parts[1].trim(),
+                    parts[2].trim(),
+                    parts[3].trim(),
+                    parts[4].trim()
+                });
+            }
+        }
+
+        javax.swing.JTable activityTable = new javax.swing.JTable(activityModel);
+        activityTable.setRowHeight(30);
+        activityTable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
+        activityTable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+
+        activityTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+
+        activityTable.getColumnModel().getColumn(0).setPreferredWidth(60);   // ID
+        activityTable.getColumnModel().getColumn(1).setPreferredWidth(120);  // Username
+        activityTable.getColumnModel().getColumn(2).setPreferredWidth(180);  // Action
+        activityTable.getColumnModel().getColumn(3).setPreferredWidth(350);  // Details
+        activityTable.getColumnModel().getColumn(4).setPreferredWidth(180);  // Date/Time
+
+        activityTable.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                int row = activityTable.rowAtPoint(e.getPoint());
+                int column = activityTable.columnAtPoint(e.getPoint());
+
+                if (row > -1 && column > -1) {
+                    Object value = activityTable.getValueAt(row, column);
+                    activityTable.setToolTipText(value == null ? "" : value.toString());
+                }
+            }
+        });
+
+        javax.swing.JPanel activityCard = new javax.swing.JPanel(new java.awt.BorderLayout());
+        activityCard.setBackground(java.awt.Color.WHITE);
+        activityCard.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(225, 225, 225)),
+                javax.swing.BorderFactory.createEmptyBorder(18, 18, 18, 18)
+        ));
+
+        javax.swing.JLabel activityTitle = new javax.swing.JLabel("Activity Log");
+        activityTitle.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 17));
+
+        activityCard.add(activityTitle, java.awt.BorderLayout.NORTH);
+        activityCard.add(new javax.swing.JScrollPane(activityTable), java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel contentPanel = new javax.swing.JPanel(new java.awt.GridLayout(1, 2, 20, 0));
+        contentPanel.setOpaque(false);
+        contentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(30, 0, 0, 0));
+
+        contentPanel.add(reportCard);
+        contentPanel.add(activityCard);
+
+        page.add(headerPanel, java.awt.BorderLayout.NORTH);
+        page.add(contentPanel, java.awt.BorderLayout.CENTER);
+
+        return page;
     }
 
     private javax.swing.JButton createSidebarButton(String text, java.awt.Font font) {
@@ -390,6 +487,27 @@ public class DashboardFrame extends javax.swing.JFrame {
         table.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
         table.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
 
+        table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(0).setPreferredWidth(60);    // ID
+        table.getColumnModel().getColumn(1).setPreferredWidth(180);   // Title
+        table.getColumnModel().getColumn(2).setPreferredWidth(260);   // Description
+        table.getColumnModel().getColumn(3).setPreferredWidth(260);   // File Path
+        table.getColumnModel().getColumn(4).setPreferredWidth(180);   // Category
+
+        table.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                int row = table.rowAtPoint(e.getPoint());
+                int column = table.columnAtPoint(e.getPoint());
+
+                if (row > -1 && column > -1) {
+                    Object value = table.getValueAt(row, column);
+                    table.setToolTipText(value == null ? "" : value.toString());
+                }
+            }
+        });
+
         javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(table);
 
         panel.add(top, java.awt.BorderLayout.NORTH);
@@ -415,27 +533,40 @@ public class DashboardFrame extends javax.swing.JFrame {
         panel.add(title);
         panel.add(javax.swing.Box.createVerticalStrut(18));
 
-        DocumentDAO documentDAO = new DocumentDAO();
-        UserDAO userDAO = new UserDAO();
+        ActivityLogDAO activityLogDAO = new ActivityLogDAO();
+        java.util.List<String> activities = activityLogDAO.getRecentActivities();
 
-        int totalDocuments = documentDAO.getDocumentCount();
-        int totalUsers = userDAO.getUserCount();
-        int totalCategories = documentDAO.getCategoryCount();
+        if (activities.isEmpty()) {
+            panel.add(createActivityLabel("No recent activity yet."));
+        } else {
+            for (String activity : activities) {
+                String[] parts = activity.split("\\|");
 
-        panel.add(createActivityLabel("Total documents: " + totalDocuments));
-        panel.add(createActivityLabel("Registered users: " + totalUsers));
-        panel.add(createActivityLabel("Document categories: " + totalCategories));
-        panel.add(createActivityLabel("Recent documents shown on dashboard"));
-        panel.add(createActivityLabel("Use Reports for category breakdown"));
+                if (parts.length >= 5) {
+                    String username = parts[1].trim();
+                    String action = parts[2].trim();
+                    String details = parts[3].trim();
+
+                    panel.add(createActivityLabel(username + " - " + action + ": " + details));
+                }
+            }
+        }
 
         return panel;
     }
 
     private javax.swing.JLabel createActivityLabel(String text) {
-        javax.swing.JLabel label = new javax.swing.JLabel("• " + text);
+        String displayText = "• " + text;
+
+        javax.swing.JLabel label = new javax.swing.JLabel(
+                "<html><body style='width:210px'>" + displayText + "</body></html>"
+        );
+
+        label.setToolTipText(displayText);
         label.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
         label.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 0, 8, 0));
         label.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+
         return label;
     }
 

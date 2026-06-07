@@ -20,6 +20,7 @@ import java.util.List;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import g10docmansys.db.ActivityLogDAO;
 
 /**
  *
@@ -33,6 +34,7 @@ public class ManageUsersPanel extends javax.swing.JPanel {
     private UserDAO userDAO;
     private JTable userTable;
     private DefaultTableModel tableModel;
+    private ActivityLogDAO activityLogDAO;
 
     /**
      * Creates new form ManageUsersPanel
@@ -40,6 +42,7 @@ public class ManageUsersPanel extends javax.swing.JPanel {
     public ManageUsersPanel() {
         initComponents();
         userDAO = new UserDAO();
+        activityLogDAO = new ActivityLogDAO();
         setupPanel();
     }
 
@@ -107,6 +110,25 @@ public class ManageUsersPanel extends javax.swing.JPanel {
         userTable.setRowHeight(30);
         userTable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
         userTable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+
+        userTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        userTable.getColumnModel().getColumn(0).setPreferredWidth(80);    // ID
+        userTable.getColumnModel().getColumn(1).setPreferredWidth(500);   // Username
+        userTable.getColumnModel().getColumn(2).setPreferredWidth(180);   // Role
+
+        userTable.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                int row = userTable.rowAtPoint(e.getPoint());
+                int column = userTable.columnAtPoint(e.getPoint());
+
+                if (row > -1 && column > -1) {
+                    Object value = userTable.getValueAt(row, column);
+                    userTable.setToolTipText(value == null ? "" : value.toString());
+                }
+            }
+        });
 
         JScrollPane scrollPane = new JScrollPane(userTable);
 
@@ -176,6 +198,12 @@ public class ManageUsersPanel extends javax.swing.JPanel {
         boolean success = userDAO.addUser(username, password, role);
 
         if (success) {
+            activityLogDAO.logActivity(
+                    "system",
+                    "Added user",
+                    "Username: " + username + ", Role: " + role
+            );
+
             JOptionPane.showMessageDialog(this, "User added successfully.");
             clearForm();
             loadUsers();
@@ -208,10 +236,17 @@ public class ManageUsersPanel extends javax.swing.JPanel {
             boolean success = userDAO.deleteUser(username);
 
             if (success) {
+                activityLogDAO.logActivity(
+                        "system",
+                        "Deleted user",
+                        "Username: " + username
+                );
+
                 JOptionPane.showMessageDialog(this, "User deleted successfully.");
                 clearForm();
+                loadUsers();
             } else {
-                JOptionPane.showMessageDialog(this, "User could not be deleted. Check that the username exists.");
+                JOptionPane.showMessageDialog(this, "User could not be deleted.");
             }
         }
     }
@@ -242,6 +277,12 @@ public class ManageUsersPanel extends javax.swing.JPanel {
             boolean success = userDAO.deleteUser(username);
 
             if (success) {
+                activityLogDAO.logActivity(
+                        "system",
+                        "Deleted user",
+                        "Username: " + username
+                );
+
                 JOptionPane.showMessageDialog(this, "User deleted successfully.");
                 clearForm();
                 loadUsers();
