@@ -249,24 +249,21 @@ public class DashboardFrame extends javax.swing.JFrame {
 
         javax.swing.JPopupMenu profileMenu = new javax.swing.JPopupMenu();
         javax.swing.JMenuItem profileItem = new javax.swing.JMenuItem("Profile");
-        javax.swing.JMenuItem switchAdminItem = new javax.swing.JMenuItem("Switch to Admin");
-        javax.swing.JMenuItem switchUserItem = new javax.swing.JMenuItem("Switch to User");
         javax.swing.JMenuItem logoutItem = new javax.swing.JMenuItem("Logout");
 
         profileMenu.add(profileItem);
-        profileMenu.add(switchAdminItem);
-        profileMenu.add(switchUserItem);
         profileMenu.addSeparator();
         profileMenu.add(logoutItem);
 
         profileButton.addActionListener(e -> profileMenu.show(profileButton, 0, profileButton.getHeight()));
 
-        switchAdminItem.addActionListener(e
-                -> javax.swing.JOptionPane.showMessageDialog(this, "Switched to admin view.")
-        );
-
-        switchUserItem.addActionListener(e
-                -> javax.swing.JOptionPane.showMessageDialog(this, "Switched to user view.")
+        profileItem.addActionListener(e
+                -> javax.swing.JOptionPane.showMessageDialog(
+                        this,
+                        "Username: " + username + "\nRole: " + role,
+                        "Profile",
+                        javax.swing.JOptionPane.INFORMATION_MESSAGE
+                )
         );
 
         logoutItem.addActionListener(e -> {
@@ -418,11 +415,18 @@ public class DashboardFrame extends javax.swing.JFrame {
         panel.add(title);
         panel.add(javax.swing.Box.createVerticalStrut(18));
 
-        panel.add(createActivityLabel("Document added by Admin"));
-        panel.add(createActivityLabel("User account updated"));
-        panel.add(createActivityLabel("Document approved"));
-        panel.add(createActivityLabel("Category changed"));
-        panel.add(createActivityLabel("Document deleted"));
+        DocumentDAO documentDAO = new DocumentDAO();
+        UserDAO userDAO = new UserDAO();
+
+        int totalDocuments = documentDAO.getDocumentCount();
+        int totalUsers = userDAO.getUserCount();
+        int totalCategories = documentDAO.getCategoryCount();
+
+        panel.add(createActivityLabel("Total documents: " + totalDocuments));
+        panel.add(createActivityLabel("Registered users: " + totalUsers));
+        panel.add(createActivityLabel("Document categories: " + totalCategories));
+        panel.add(createActivityLabel("Recent documents shown on dashboard"));
+        panel.add(createActivityLabel("Use Reports for category breakdown"));
 
         return panel;
     }

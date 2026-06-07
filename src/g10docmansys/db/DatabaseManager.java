@@ -21,6 +21,7 @@ public class DatabaseManager {
 
             createDocumentsTable(statement);
             createUsersTable(statement);
+            createActivityLogTable(statement);
             insertDefaultUsers(connection);
 
             statement.close();
@@ -66,6 +67,24 @@ public class DatabaseManager {
             );
         } catch (SQLException e) {
 
+            if (!"X0Y32".equals(e.getSQLState())) {
+                throw e;
+            }
+        }
+    }
+
+    private static void createActivityLogTable(Statement statement) throws SQLException {
+        try {
+            statement.executeUpdate(
+                    "CREATE TABLE activity_log ("
+                    + "id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, "
+                    + "username VARCHAR(100), "
+                    + "action VARCHAR(100) NOT NULL, "
+                    + "details VARCHAR(1000), "
+                    + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                    + ")"
+            );
+        } catch (SQLException e) {
             if (!"X0Y32".equals(e.getSQLState())) {
                 throw e;
             }
