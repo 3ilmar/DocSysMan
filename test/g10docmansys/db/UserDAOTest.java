@@ -19,11 +19,22 @@ public class UserDAOTest {
                 "user"
         );
 
-        assertTrue(added);
+        assertTrue("User should be added successfully", added);
 
         boolean loginSuccessful = dao.login(username, "testpass123");
 
-        assertTrue(loginSuccessful);
+        assertTrue("Newly added user should be able to login", loginSuccessful);
+    }
+
+    @Test
+    public void testInvalidLoginFails() {
+        DatabaseManager.initializeDatabase();
+
+        UserDAO dao = new UserDAO();
+
+        boolean loginSuccessful = dao.login("admin", "wrongpassword");
+
+        assertFalse("Invalid password should not login", loginSuccessful);
     }
 
     @Test
